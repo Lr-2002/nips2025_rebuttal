@@ -11,75 +11,75 @@ This document describes the trajectory stability metrics implemented for the COI
 **Purpose**: Detect large impact forces and action discontinuities that cause VLA model failures.
 
 **Formula**: 
-```
-Overall Stability = w₁×v_smooth + w₂×a_smooth + w₃×j_smooth + w₄×p_stable
-```
+$$
+S_{\text{traj}} = 0.3 \cdot S_{\text{vel}} + 0.3 \cdot S_{\text{acc}} + 0.2 \cdot S_{\text{jerk}} + 0.2 \cdot S_{\text{pos}}
+$$
 
 Where:
-- `w₁ = 0.2` (velocity weight)
-- `w₂ = 0.3` (acceleration weight) 
-- `w₃ = 0.4` (jerk weight)
-- `w₄ = 0.1` (position weight)
+- $S_{\text{vel}}$ = velocity smoothness
+- $S_{\text{acc}}$ = acceleration smoothness  
+- $S_{\text{jerk}}$ = jerk smoothness
+- $S_{\text{pos}}$ = position stability
 
 ### 2. Kinematic Analysis Components
 
 #### Velocity Calculation
-```
-v(t) = (p(t+1) - p(t)) / dt
-```
+$$
+\mathbf{v}_t = \frac{\mathbf{p}_{t+1} - \mathbf{p}_t}{\Delta t}
+$$
 
 #### Acceleration Calculation  
-```
-a(t) = (v(t+1) - v(t)) / dt
-```
+$$
+\mathbf{a}_t = \frac{\mathbf{v}_{t+1} - \mathbf{v}_t}{\Delta t}
+$$
 
 #### Jerk Calculation
-```
-j(t) = (a(t+1) - a(t)) / dt
-```
+$$
+\mathbf{j}_t = \frac{\mathbf{a}_{t+1} - \mathbf{a}_t}{\Delta t}
+$$
 
 ### 3. Smoothness Metric
-```
-Smoothness = 1 / (1 + σ²)
-```
-Where σ² is the variance of the kinematic data.
+$$
+S_{\text{smooth}} = \exp\left(-\alpha \cdot \frac{\sigma(|\mathbf{q}_t|)}{\mu(|\mathbf{q}_t|) + \epsilon}\right)
+$$
+Where $\sigma$ is standard deviation, $\mu$ is mean, and $\epsilon = 10^{-6}$.
 
 ### 4. Position Stability
-```
-Stability = 1 / (1 + mean_deviation)
-```
-Where mean_deviation is the average distance from trajectory centroid.
+$$
+S_{\text{pos}} = \exp\left(-\beta \cdot \frac{1}{T-k} \sum_{t=k+1}^{T} \|\mathbf{p}_t - \mathbf{p}_{t-k}\|_2\right)
+$$
+Where $\beta = 1.0$.
 
 ### 5. Gripper Control Stability Score
 
 **Purpose**: Detect erratic gripper control behavior, such as excessive open/close actions that indicate unstable VLA gripper control.
 
 **Formula**:
-```
-Gripper Stability = w₁×smoothness + w₂×frequency + w₃×coordination
-```
+$$
+S_{\text{gripper}} = 0.4 \cdot S_{\text{smooth}} + 0.3 \cdot S_{\text{freq}} + 0.3 \cdot S_{\text{coord}}
+$$
 
 Where:
-- `w₁ = 0.4` (smoothness weight)
-- `w₂ = 0.3` (frequency weight)
-- `w₃ = 0.3` (coordination weight)
+- $S_{\text{smooth}}$ = gripper smoothness
+- $S_{\text{freq}}$ = gripper frequency score
+- $S_{\text{coord}}$ = gripper-motion coordination
 
 #### 5.1 Gripper Smoothness
-```
-Gripper Smoothness = 1 / (1 + variance(gripper_state_changes))
-```
+$$
+S_{\text{smooth}} = \exp\left(-\gamma \cdot \frac{N_{\text{abrupt}}}{N_{\text{total}} + \epsilon}\right)
+$$
+Where $\gamma = 3.0$.
 
 #### 5.2 Gripper Frequency Score
-```
-Frequency Score = min(1.0, expected_changes / actual_changes)
-```
-Where expected_changes = max(2, trajectory_length / 50)
+$$
+S_{\text{freq}} = \min\left(1.0, \frac{N_{\text{expected}}}{N_{\text{total}}}\right)
+$$
+Where $N_{\text{expected}} = \left\lfloor \frac{T}{50} \right\rfloor$.
 
 #### 5.3 Gripper-Motion Coordination
-Analyzes velocity changes in 10-frame windows before/after gripper state transitions:
-- **Closing**: Rewards arm deceleration before gripper closes (approaching object)
-- **Opening**: Rewards arm acceleration after gripper opens (moving away)
-- **General**: Any velocity adjustment around gripper action indicates coordination
+$$
+S_{\text{coord}} = \frac{\sum_{t} (R_{\text{decel}}(t) + R_{\text{accel}}(t))}{N_{\text{total}}}
+$$
 
 ## Implementation
 
