@@ -1,0 +1,5 @@
+remote_data/*
+instruction_analysis/*
+analysis_results/*
+__pycache__
+__pycache__
