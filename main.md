@@ -45,12 +45,13 @@ Additionally, since our benchmark is built on SAPIEN and ManiSkill, extending th
 We agree that binary metrics are limiting. Based on our detailed failure analysis, we propose these enhanced metrics categorized by failure types:
 Overall, we have implemented a wide range of evaluation metrics, though their presentation in the paper was previously somewhat scattered, which may have reduced clarity. Here, we provide a more systematic summary and supplement these metrics as follows:
 
-SR/CSR (Success Rate/Conditional Success Rate): Used to evaluate the overall performance of each model on the tasks.
-Action Smoothness Score: Evaluates the smoothness and stability of actions learned by VLAs; this helps us analyze whether the robot exhibits abrupt impacts or significant deviations in Cartesian space.
-Gripper Timing Accuracy: Assesses whether the VLA’s gripper control suffers from frequent opening/closing or fails to operate at appropriate positions.
-Generalization Capability Score: By comparing model performance on COIN-Primitive and COIN-Composition tasks, we can identify whether failures stem from insufficient generalization.
-Task Decomposition Score: Evaluates whether VLMs can effectively decompose tasks into meaningful subgoals.
-Instruction Changing Score: Measures whether VLMs can appropriately switch plans at the right moments (e.g., after opening a door, the next step should be to pick up the object on the table).
+1. **SR/CSR (Success Rate/Conditional Success Rate)**: Used to evaluate the overall performance of each model on the tasks.
+2. **Action Smoothness Score**: Evaluates the smoothness and stability of actions learned by VLAs; this helps us analyze whether the robot exhibits abrupt impacts or significant deviations in Cartesian space.
+3. **Gripper Timing Accuracy**: Assesses whether the VLA's gripper control suffers from frequent opening/closing or fails to operate at appropriate positions.
+4. **Generalization Capability Score**: By comparing model performance on COIN-Primitive and COIN-Composition tasks, we can identify whether failures stem from insufficient generalization.
+5. **Task Decomposition Score**: Evaluates whether VLMs can effectively decompose tasks into meaningful subgoals.
+6. **Instruction Changing Score**: Measures whether VLMs can appropriately switch plans at the right moments (e.g., after opening a door, the next step should be to pick up the object on the table).
+
 Notably, metrics 5 and 6 are scored using GPT, and we have standardized on GPT-4o as our evaluation model for these assessments.
 These metrics would provide fine-grained analysis of different failure modes while maintaining the diagnostic value of our challenging benchmark.
 
@@ -61,9 +62,12 @@ These metrics would provide fine-grained analysis of different failure modes whi
 ### Q1: The authors introduce a low-cost mobile AR teleoperation pipeline, but they don't thoroughly evaluate its reliability, the fidelity of the captured data, or how it compares to other collection methods. Such analyses are crucial, since the community impact of a dataset hinges on its quality.
 
 **Response:**
+
 We appreciate your concern about validating our AR teleoperation system. Our system demonstrates several advantages over traditional methods:
-System Foundation and Stability: Our system is developed using commercial AR solutions—ARCore and ARKit—across different devices. These platforms utilize mature VIO (Visual-Inertial Odometry) algorithms that fuse IMU and camera data. This approach has been extensively validated in the literature (e.g., VINS-MONO and subsequent works), providing strong evidence of tracking stability. Additionally, we drew inspiration from prior projects such as Mujoco_AR, which have demonstrated comparable levels of robustness. Building on these foundations, we made further improvements to enhance system reliability.
-Data Quality and Usability: The demonstrations collected using our AR system consistently enable the training of effective VLA models, indicating that the data is of high and reliable quality. Most models trained on this data are able to perform the intended tasks successfully, further validating the stability of our data collection approach.
+
+1. **System Foundation and Stability**: Our system is developed using commercial AR solutions—ARCore and ARKit—across different devices. These platforms utilize mature VIO (Visual-Inertial Odometry) algorithms that fuse IMU and camera data. This approach has been extensively validated in the literature (e.g., VINS-MONO and subsequent works), providing strong evidence of tracking stability. Additionally, we drew inspiration from prior projects such as Mujoco_AR, which have demonstrated comparable levels of robustness. Building on these foundations, we made further improvements to enhance system reliability.
+
+2. **Data Quality and Usability**: The demonstrations collected using our AR system consistently enable the training of effective VLA models, indicating that the data is of high and reliable quality. Most models trained on this data are able to perform the intended tasks successfully, further validating the stability of our data collection approach.
 ### Q2: In Table 1, the paper only lists a few qualitative feature comparisons with prior datasets. It lacks detailed, quantitative metrics—e.g., overall scale, number of demonstrations, task diversity, and data quality—information that's essential for assessing the dataset's true value.
 
 **Response:**
@@ -96,7 +100,7 @@ Thank you for your question. We address the concern about procedural diversity a
 ### Q4: Minor Issues - The bottom-right inset of Figure 2 is illegible. Equations are missing terminal punctuation.
 
 **Response:**
-Thank you for point out these issues. We will address them in the revision:
+Thank you for pointing out these issues. We will address them in the revision:
 - Figure 2 inset will be enlarged and clarified in the revision
 - Mathematical notation will be corrected with proper punctuation
 
@@ -106,15 +110,17 @@ Thank you for point out these issues. We will address them in the revision:
 
 ### Q1: The chosen binary success metrics (success/failure) are overly simplistic, lacking nuances like partial successes or graceful recovery. Such simplistic metrics may obscure incremental improvements critical to interactive reasoning tasks. It would be helpful to introduce more nuanced or graded metrics (e.g., progress scores, task-specific milestones, or time efficiency), and this might provide deeper insights into models' capabilities and behaviors.
 
+**Response:**
+
 Thank you for your suggestion. We agree that binary metrics are limiting. Based on our detailed failure analysis, we propose these enhanced metrics categorized by failure types:
 Overall, we have implemented a wide range of evaluation metrics, though their presentation in the paper was previously somewhat scattered, which may have reduced clarity. Here, we provide a more systematic summary and supplement these metrics as follows:
 
-1. SR/CSR (Success Rate/Conditional Success Rate): Used to evaluate the overall performance of each model on the tasks.
-2. Action Smoothness Score: Evaluates the smoothness and stability of actions learned by VLAs; this helps us analyze whether the robot exhibits abrupt impacts or significant deviations in Cartesian space.
-3. Gripper Timing Accuracy: Assesses whether the VLA’s gripper control suffers from frequent opening/closing or fails to operate at appropriate positions.
-4. Generalization Capability Score: By comparing model performance on COIN-Primitive and COIN-Composition tasks, we can identify whether failures stem from insufficient generalization.
-5. Task Decomposition Score: Evaluates whether VLMs can effectively decompose tasks into meaningful subgoals.
-6. Instruction Changing Score: Measures whether VLMs can appropriately switch plans at the right moments (e.g., after opening a door, the next step should be to pick up the object on the table).
+**1. SR/CSR (Success Rate/Conditional Success Rate)**: Used to evaluate the overall performance of each model on the tasks.
+**2. Action Smoothness Score**: Evaluates the smoothness and stability of actions learned by VLAs; this helps us analyze whether the robot exhibits abrupt impacts or significant deviations in Cartesian space.
+**3. Gripper Timing Accuracy**: Assesses whether the VLA’s gripper control suffers from frequent opening/closing or fails to operate at appropriate positions.
+**4. Generalization Capability Score**: By comparing model performance on COIN-Primitive and COIN-Composition tasks, we can identify whether failures stem from insufficient generalization.
+**5. Task Decomposition Score**: Evaluates whether VLMs can effectively decompose tasks into meaningful subgoals.
+**6. Instruction Changing Score**: Measures whether VLMs can appropriately switch plans at the right moments (e.g., after opening a door, the next step should be to pick up the object on the table).
 Notably, metrics 5 and 6 are scored using GPT, and we have standardized on GPT-4o as our evaluation model for these assessments.
 These metrics would provide fine-grained analysis of different failure modes while maintaining the diagnostic value of our challenging benchmark.
 
@@ -123,39 +129,41 @@ These metrics would provide fine-grained analysis of different failure modes whi
 **Response:**
 We appreciate this concern and understand it may arise from the compact presentation of our temporal analysis. We would like to clarify that COIN actually demonstrates substantially longer and more complex temporal reasoning than existing benchmarks. The detailed comparison may not be immediately apparent from the main figures, so we provide the specific data here. As shown in Figure 2 (top-left panel), COIN tasks span 180–2500 steps, which is significantly longer than other benchmarks:
 
-Benchmark	Average Length
-ManipulaSkill	52.3
-Libero	77.3
-RoboCasa A.	123
-ARNOLD	125.8
-VLABench P.	157.2
-RLBench	180.2
-RoboCasa C.	371.9
-RLBench C.	502.5
-COIN-50	988.9
-COIN's Extended Temporal Reasoning and Task Structure:
+| Benchmark | Average Length |
+|-----------|----------------|
+| ManipulaSkill | 52.3 |
+| Libero | 77.3 |
+| RoboCasa A. | 123 |
+| ARNOLD | 125.8 |
+| VLABench P. | 157.2 |
+| RLBench | 180.2 |
+| RoboCasa C. | 371.9 |
+| RLBench C. | 502.5 |
+| **COIN-50** | **988.9** |
+**COIN's Extended Temporal Reasoning and Task Structure:**
 
-Our benchmark is not only longer in terms of average trajectory length, but also features a rich diversity of temporal dependencies and subgoal structures.
-Among our 50 tasks, the vast majority contain more than three subgoals, with at least 40 tasks exhibiting strong temporal dependencies—meaning that information or actions from earlier in the task are essential for successful completion of later stages. This design ensures that models must reason over extended horizons and cannot succeed by relying solely on local or short-term cues.
-The average trajectory length in COIN is the longest among all existing benchmarks, at over 900 steps per task.
-Multi-Level Subgoal Decomposition: Our design philosophy emphasizes both interactive reasoning depth and genuine temporal complexity. Each COIN task is composed of multiple subgoals, requiring models to:
+- Our benchmark is not only longer in terms of average trajectory length, but also features a rich diversity of temporal dependencies and subgoal structures.
+- Among our 50 tasks, the vast majority contain more than three subgoals, with at least 40 tasks exhibiting strong temporal dependencies—meaning that information or actions from earlier in the task are essential for successful completion of later stages. This design ensures that models must reason over extended horizons and cannot succeed by relying solely on local or short-term cues.
+- The average trajectory length in COIN is the longest among all existing benchmarks, at over 900 steps per task.
+**Multi-Level Subgoal Decomposition:** Our design philosophy emphasizes both interactive reasoning depth and genuine temporal complexity. Each COIN task is composed of multiple subgoals, requiring models to:
 
-Plan across multiple subgoals (typically 2–5 per task)
-Maintain and update goal hierarchies throughout extended interactions
-Coordinate between subgoals, where success in later stages depends on correct execution of earlier ones
-Adapt subgoal execution based on environmental feedback
+- Plan across multiple subgoals (typically 2–5 per task)
+- Maintain and update goal hierarchies throughout extended interactions
+- Coordinate between subgoals, where success in later stages depends on correct execution of earlier ones
+- Adapt subgoal execution based on environmental feedback
 The following table summarizes the distribution of subgoal counts across tasks:
 
-Subtask Length	Percentage	Number of Tasks
-2	0.36	18
-3	0.46	23
-4	0.12	6
-5	0.06	3
-Key Takeaways:
+| Subtask Length | Percentage | Number of Tasks |
+|----------------|------------|----------------|
+| 2 | 0.36 | 18 |
+| 3 | 0.46 | 23 |
+| 4 | 0.12 | 6 |
+| 5 | 0.06 | 3 |
+**Key Takeaways:**
 
-Nearly all tasks in COIN require reasoning over multiple, temporally dependent subgoals.
-Over 80% of tasks have three or more subgoals, and at least 40 tasks are explicitly designed such that earlier information is essential for later reasoning.
-This structure enforces multi-step causal reasoning and prevents shortcut solutions based on memorization or local pattern matching.
+- Nearly all tasks in COIN require reasoning over multiple, temporally dependent subgoals.
+- Over 80% of tasks have three or more subgoals, and at least 40 tasks are explicitly designed such that earlier information is essential for later reasoning.
+- This structure enforces multi-step causal reasoning and prevents shortcut solutions based on memorization or local pattern matching.
 Together, these features represent a significant advance in temporal reasoning evaluation for embodied AI, combining extended temporal horizons, hierarchical goal decomposition, and genuine interactive complexity.
 ### Q3: The diversity in object categories, materials, textures, and physical interactions is relatively limited. More diverse object and scene categories would strengthen the generalization claims of the benchmark.
 
@@ -169,10 +177,13 @@ Of course, we recognize the importance of broader diversity as you mentioned. Ma
 **Response:**
 Thank you for your suggestion. Throughout the rebuttal process, we have introduced several new metrics and reorganized our previous evaluation framework. Our updated analysis highlights the following key directions for addressing observed model failures:
 
-Urgent Need to Improve VLA Generalization: We found that even introducing a small new object (e.g., a cube) into the workspace can significantly degrade VLA generalization. This limitation severely restricts the scalability of current models and is a fundamental bottleneck for interactive reasoning scenarios.
-Action Stability and Gripper Timing: Our experiments demonstrate that both action stability and the accuracy of gripper timing are critical for model performance, especially in tasks involving pick, place, open, and close operations. Instabilities in these aspects can drastically affect the success of interactive manipulations.
-Toward More Adaptive Code-as-Policy Approaches: Current open-loop methods lack strong adaptability for interactive reasoning tasks. We recommend incorporating more online, closed-loop strategies, as well as chain-of-thought (CoT) style reasoning within VLMs. By enabling models to summarize feedback during execution and use these summaries to inform subsequent decisions, we can move beyond simple backtracking and better handle the dynamic nature of real-world environments.
-Enhancing HVLA Task Switching and Instruction Handling: HVLA models should integrate more sophisticated modules for task switching. Instruction chaining can enable models to tackle new tasks, but it is equally important for the model to reflect on recent changes—potentially by summarizing the last segment of video—and use this context to guide future task planning.
+1. **Urgent Need to Improve VLA Generalization**: We found that even introducing a small new object (e.g., a cube) into the workspace can significantly degrade VLA generalization. This limitation severely restricts the scalability of current models and is a fundamental bottleneck for interactive reasoning scenarios.
+
+2. **Action Stability and Gripper Timing**: Our experiments demonstrate that both action stability and the accuracy of gripper timing are critical for model performance, especially in tasks involving pick, place, open, and close operations. Instabilities in these aspects can drastically affect the success of interactive manipulations.
+
+3. **Toward More Adaptive Code-as-Policy Approaches**: Current open-loop methods lack strong adaptability for interactive reasoning tasks. We recommend incorporating more online, closed-loop strategies, as well as chain-of-thought (CoT) style reasoning within VLMs. By enabling models to summarize feedback during execution and use these summaries to inform subsequent decisions, we can move beyond simple backtracking and better handle the dynamic nature of real-world environments.
+
+4. **Enhancing HVLA Task Switching and Instruction Handling**: HVLA models should integrate more sophisticated modules for task switching. Instruction chaining can enable models to tackle new tasks, but it is equally important for the model to reflect on recent changes—potentially by summarizing the last segment of video—and use this context to guide future task planning.
 These recommendations are directly informed by our expanded evaluation metrics and aim to provide concrete strategies for improving model robustness and adaptability in interactive reasoning settings.
 ### Q5: No comparison or baseline involving human performance or human-level task demonstrations is provided. Such a baseline would help contextualize the difficulty level of tasks and set meaningful targets for model performance.
 
