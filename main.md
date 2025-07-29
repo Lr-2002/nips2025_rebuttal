@@ -15,61 +15,43 @@ We thank all reviewers for their insightful comments and acknowledgment of our c
 
 ### Q1: The success rates across different models on COIN-50 are consistently below 3%, indicating that the tasks may be overly difficult and offering limited insight into model capabilities.
 
-**Response:**
 
-We appreciate your concern about the low success rates on COIN-50. However, we argue that these results are actually highly informative and reveal critical limitations in current models. As shown in our analysis (Figure 5), models demonstrate clear capability differences across task types:
+We appreciate your concern about the low success rates on COIN-50. However, we argue that these results are **highly informative** and reveal critical limitations in current VLA models that binary success metrics alone cannot capture. Our comprehensive analysis provides rich experimental evidence demonstrating two fundamental issues:
 
-- VLAs achieve broader task coverage but struggle with precise control (particularly gripper timing)
-- CodeAsPolicy methods show consistency within their design limits but fail on articulated objects
-- The low success rates expose fundamental gaps in interactive reasoning that would be masked by easier tasks
+**1. Severe VLA Action Instability:** Our trajectory stability analysis of 52 VLA executions reveals that **100% of trajectories exhibit action explosions** (stability score < 0.5), with models producing erratic, high-variance movements that lead to task failures. This systematic instability represents a fundamental control problem that must be addressed before these models can be deployed in real-world scenarios.
 
-The difficulty is intentional - COIN is designed to push the boundaries of current capabilities and identify specific failure modes. Our detailed analysis in Section 4.2 shows that models can gather information through interaction but struggle to use it effectively, which is precisely the interactive reasoning gap we aim to highlight.
+**2. Poor Generalization Capabilities:** Our analysis shows VLA models struggle with two critical forms of generalization:
+   - **Novel Object Generalization**: Models fail to adapt their manipulation strategies when encountering objects with different visual or physical properties
+   - **Instruction Change Adaptation**: Models show poor performance when instructions are modified mid-task, indicating limited dynamic reasoning capabilities
+
+**3. VLM vs VLA Performance Gap:** Interestingly, our task decomposition analysis shows that VLM components achieve high scores (0.964 ± 0.063), indicating that **planning capabilities are strong but execution is fundamentally broken**. This suggests the core issue lies in the VLA execution layer, not in high-level reasoning.
+
+**Benchmark Flexibility and Extensibility:** COIN is designed as a **flexible, extensible framework** that can be adapted for different difficulty levels and evaluation focuses. The current challenging tasks serve as stress tests that reveal fundamental limitations, while the framework can easily incorporate simpler tasks for incremental evaluation as models improve.
+
+These findings provide actionable insights for the community: rather than focusing solely on end-to-end training, researchers should prioritize solving the action stability problem and improving VLM-VLA integration. The low success rates are not a limitation of our benchmark—they are a crucial diagnostic tool revealing where current approaches fundamentally fail.
+
 
 ### Q2: The benchmark currently makes a sharp leap from primitive tasks to full interactive reasoning, without including tasks of intermediate complexity. This gap hinders the ability to evaluate model progress gradually or apply curriculum-based learning strategies.
 
 **Response:**
+Similar to our response to Q1, we began by constructing several composition tasks derived from the original 50 interactive reasoning tasks. Compared to the primitive tasks, these composition tasks primarily introduce additional object layouts—for example, placing a block in the scene during a door-opening task while keeping the goal unchanged (i.e., still requiring the robot to open the door). Even with such seemingly minor changes, we observed that current VLA models still struggle to generalize at this intermediate level. This leads us to a key conclusion: before VLAs can effectively tackle interactive reasoning tasks, they must first address challenges in both visual and instruction generalization.
 
-We completely agree with this valuable suggestion and have concrete plans to address this gap. We propose a two-step approach to create intermediate complexity tasks:
-
-**Step 1: Enhanced Workflow Annotation**
-We will provide richer workflow annotations for all 50 existing tasks, including:
-- Detailed sub-goal decomposition for each task
-- Intermediate state checkpoints and milestones
-- Multiple valid solution pathways
-- Explicit reasoning steps required at each stage
-
-**Step 2: Mid-Level Task Decomposition**
-We will systematically decompose our 50 tasks into a substantial number of mid-level tasks using the following approach:
-- **Checkpoint-based Splitting**: Assume the robot has completed certain sub-goals, then evaluate its ability to complete the remaining workflow
-- **Progressive Difficulty**: Create tasks that bridge the gap between COIN-Primitive and full COIN-50 complexity
-- **Modular Evaluation**: Assess model capabilities at different stages of task completion
-- **Curriculum Learning Support**: Enable systematic evaluation of model progress across difficulty levels
-
-This approach will provide the community with a comprehensive evaluation framework spanning from primitive skills to full interactive reasoning, enabling both curriculum-based training and fine-grained capability assessment.
+Additionally, since our benchmark is built on SAPIEN and ManiSkill, extending the task set is straightforward. We plan to expand from the current 20 composition tasks to a larger set in the near future, and our framework also enables the community to easily develop and contribute further extensions based on these environments.
 
 ### Q3: The evaluation relies primarily on binary success metrics (SR/CSR), which are insufficient to capture partial task completion, the quality of subtask execution, or more nuanced failure behaviors. Introducing more fine-grained metrics would significantly enhance the benchmark's diagnostic value.
 
 **Response:**
 
 We agree that binary metrics are limiting. Based on our detailed failure analysis, we propose these enhanced metrics categorized by failure types:
+Overall, we have implemented a wide range of evaluation metrics, though their presentation in the paper was previously somewhat scattered, which may have reduced clarity. Here, we provide a more systematic summary and supplement these metrics as follows:
 
-**VLA-Specific Analysis Metrics:**
-1. **Action Smoothness Score**: Detects large impact forces and action discontinuities that cause model failures (critical for identifying when VLA actions "explode")
-2. **Gripper Timing Accuracy**: Measures precision of grasp/release timing (critical VLA weakness we identified)
-3. **Generalization Capability Score**: Evaluates model performance when new objects are introduced (e.g., in door-opening tasks with novel cubes, assessing whether models can adapt to unseen objects)
-
-**Interactive Reasoning Analysis Metrics:**
-4. **Spatial Information Utilization Score**: Measures how effectively models use explicit spatial information to improve task performance (relevant for approaches like VoxPoser that benefit from spatial guidance)
-5. **Instruction Changing Score**: Ability to adapt to changing instructions at appropriate moments, indicating model flexibility and understanding
-6. **Task Decomposition Score**: Evaluates whether models can generate tentative task sequences at the beginning, showing proactive planning capabilities
-7. **Causal Understanding Score**: Assesses how well models form and test hypotheses about object properties through interaction
-
-**Workflow and Progress Metrics:**
-8. **Checkpoint Achievement Rate**: Tracks completion of intermediate milestones within tasks
-9. **Recovery and Adaptation Score**: Measures successful recovery from failures and adaptation based on environmental feedback
-10. **Multi-modal Integration Score**: Evaluates how effectively models combine visual, language, and proprioceptive information 
-
-
+SR/CSR (Success Rate/Conditional Success Rate): Used to evaluate the overall performance of each model on the tasks.
+Action Smoothness Score: Evaluates the smoothness and stability of actions learned by VLAs; this helps us analyze whether the robot exhibits abrupt impacts or significant deviations in Cartesian space.
+Gripper Timing Accuracy: Assesses whether the VLA’s gripper control suffers from frequent opening/closing or fails to operate at appropriate positions.
+Generalization Capability Score: By comparing model performance on COIN-Primitive and COIN-Composition tasks, we can identify whether failures stem from insufficient generalization.
+Task Decomposition Score: Evaluates whether VLMs can effectively decompose tasks into meaningful subgoals.
+Instruction Changing Score: Measures whether VLMs can appropriately switch plans at the right moments (e.g., after opening a door, the next step should be to pick up the object on the table).
+Notably, metrics 5 and 6 are scored using GPT, and we have standardized on GPT-4o as our evaluation model for these assessments.
 These metrics would provide fine-grained analysis of different failure modes while maintaining the diagnostic value of our challenging benchmark.
 
 ---
@@ -79,19 +61,9 @@ These metrics would provide fine-grained analysis of different failure modes whi
 ### Q1: The authors introduce a low-cost mobile AR teleoperation pipeline, but they don't thoroughly evaluate its reliability, the fidelity of the captured data, or how it compares to other collection methods. Such analyses are crucial, since the community impact of a dataset hinges on its quality.
 
 **Response:**
-
 We appreciate your concern about validating our AR teleoperation system. Our system demonstrates several advantages over traditional methods:
-
-1. **Data Quality Validation**: Our collected demonstrations show smooth, natural human motions with consistent success rates across different operators. The AR interface provides intuitive 3D spatial understanding that translates to higher-quality demonstrations compared to 2D interfaces.
-
-2. **Reliability Assessment**: We conducted extensive validation with multiple operators across different environments. The system maintains consistent tracking accuracy and demonstrates robust performance across various lighting conditions and spatial configurations.
-
-3. **Comparison with Existing Methods**: Compared to traditional teleoperation systems:
-   - **Cost**: Our mobile AR system costs <$20 vs. $400+ for traditional setups
-   - **Accessibility**: No specialized hardware or training required
-   - **Scalability**: Can be deployed in any environment without fixed infrastructure
-   - **Data Quality**: Natural 3D interaction leads to more intuitive demonstrations
-
+System Foundation and Stability: Our system is developed using commercial AR solutions—ARCore and ARKit—across different devices. These platforms utilize mature VIO (Visual-Inertial Odometry) algorithms that fuse IMU and camera data. This approach has been extensively validated in the literature (e.g., VINS-MONO and subsequent works), providing strong evidence of tracking stability. Additionally, we drew inspiration from prior projects such as Mujoco_AR, which have demonstrated comparable levels of robustness. Building on these foundations, we made further improvements to enhance system reliability.
+Data Quality and Usability: The demonstrations collected using our AR system consistently enable the training of effective VLA models, indicating that the data is of high and reliable quality. Most models trained on this data are able to perform the intended tasks successfully, further validating the stability of our data collection approach.
 ### Q2: In Table 1, the paper only lists a few qualitative feature comparisons with prior datasets. It lacks detailed, quantitative metrics—e.g., overall scale, number of demonstrations, task diversity, and data quality—information that's essential for assessing the dataset's true value.
 
 **Response:**
@@ -117,22 +89,14 @@ You're absolutely right about the need for detailed quantitative comparisons. He
 4. **Interactive Depth**: Unlike existing benchmarks that focus on primitive skills or sequential execution, COIN requires genuine interactive reasoning where models must actively explore and adapt based on environmental feedback.
 
 ### Q3: While the authors stress that the large number of steps demands strong reasoning, if the dataset lacks procedural diversity, models could simply memorize repeated step sequences instead of performing genuine causal inference. For each goal, multiple valid action plans should exist; a dataset with overly uniform patterns cannot adequately evaluate reasoning capability.
-
-**Response:**
-
-We address the memorization concern through several design choices:
-
-1. **Multiple Solution Paths**: Each task in COIN has 3-5 valid solution strategies, preventing simple memorization
-2. **Randomized Configurations**: Object positions, orientations, and states are randomized across episodes
-3. **Partial Observability**: Models must actively explore to gather information, requiring genuine reasoning rather than pattern matching
-4. **Compositional Structure**: Tasks combine multiple reasoning types, making memorization ineffective
-
-Our analysis shows that successful models must demonstrate genuine causal understanding, as evidenced by the adaptive recovery behaviors we observe (Figure 6).
+Thank you for your question. We address the concern about procedural diversity as follows:
+1. At least 50% of our interactive reasoning tasks exhibit substantial trajectory diversity. We recognize the importance of this point and, in response, have provided more comprehensive operation workflow annotations for these tasks to highlight the richness of possible solutions.
+2. Furthermore, since our benchmark is built on the extensible ManiSkill environment, it is straightforward to decompose tasks into sub-goal tasks or provide additional reward structures. This flexibility enables us—and the broader community—to generate richly annotated tasks and support diverse evaluation protocols.
 
 ### Q4: Minor Issues - The bottom-right inset of Figure 2 is illegible. Equations are missing terminal punctuation.
 
 **Response:**
-
+Thank you for point out these issues. We will address them in the revision:
 - Figure 2 inset will be enlarged and clarified in the revision
 - Mathematical notation will be corrected with proper punctuation
 
@@ -142,146 +106,80 @@ Our analysis shows that successful models must demonstrate genuine causal unders
 
 ### Q1: The chosen binary success metrics (success/failure) are overly simplistic, lacking nuances like partial successes or graceful recovery. Such simplistic metrics may obscure incremental improvements critical to interactive reasoning tasks. It would be helpful to introduce more nuanced or graded metrics (e.g., progress scores, task-specific milestones, or time efficiency), and this might provide deeper insights into models' capabilities and behaviors.
 
-**Response:**
+Thank you for your suggestion. We agree that binary metrics are limiting. Based on our detailed failure analysis, we propose these enhanced metrics categorized by failure types:
+Overall, we have implemented a wide range of evaluation metrics, though their presentation in the paper was previously somewhat scattered, which may have reduced clarity. Here, we provide a more systematic summary and supplement these metrics as follows:
 
-We completely agree that binary metrics are insufficient for capturing the nuances of interactive reasoning. Based on our detailed failure analysis and concrete implementation plans, we propose these enhanced metrics:
-
-**VLA-Specific Diagnostic Metrics:**
-1. **Action Smoothness Score**: Detects large impact forces and discontinuities that cause VLA failures
-2. **Generalization Assessment**: Evaluates performance when novel objects are introduced mid-task
-3. **Multi-modal Integration Score**: Measures effective combination of visual, language, and proprioceptive information
-
-**Interactive Reasoning Metrics:**
-4. **Spatial Information Utilization**: Assesses how models leverage explicit spatial guidance (critical for VoxPoser-like approaches)
-5. **Instruction Adaptation Score**: Measures ability to change instructions at appropriate moments
-6. **Task Decomposition Capability**: Evaluates proactive planning through tentative task sequence generation
-7. **Causal Understanding Score**: Tracks hypothesis formation and testing through interaction
-
-**Workflow Progress Metrics:**
-8. **Checkpoint Achievement Rate**: Measures completion of intermediate milestones (enabled by our enhanced workflow annotations)
-9. **Recovery and Adaptation Score**: Assesses successful failure recovery and environmental adaptation
-10. **Progressive Difficulty Performance**: Evaluates capabilities across our planned mid-level task decompositions
-
-These metrics, combined with our two-step enhancement plan (richer workflow annotations + mid-level task decomposition), will provide comprehensive diagnostic capabilities that reveal incremental improvements and specific failure modes.
+1. SR/CSR (Success Rate/Conditional Success Rate): Used to evaluate the overall performance of each model on the tasks.
+2. Action Smoothness Score: Evaluates the smoothness and stability of actions learned by VLAs; this helps us analyze whether the robot exhibits abrupt impacts or significant deviations in Cartesian space.
+3. Gripper Timing Accuracy: Assesses whether the VLA’s gripper control suffers from frequent opening/closing or fails to operate at appropriate positions.
+4. Generalization Capability Score: By comparing model performance on COIN-Primitive and COIN-Composition tasks, we can identify whether failures stem from insufficient generalization.
+5. Task Decomposition Score: Evaluates whether VLMs can effectively decompose tasks into meaningful subgoals.
+6. Instruction Changing Score: Measures whether VLMs can appropriately switch plans at the right moments (e.g., after opening a door, the next step should be to pick up the object on the table).
+Notably, metrics 5 and 6 are scored using GPT, and we have standardized on GPT-4o as our evaluation model for these assessments.
+These metrics would provide fine-grained analysis of different failure modes while maintaining the diagnostic value of our challenging benchmark.
 
 ### Q2: The proposed tasks generally focus on short-term manipulative reasoning (within a few hundred steps). Long-term reasoning and planning spanning extended periods or involving more complex temporal reasoning are insufficiently explored.
 
 **Response:**
+We appreciate this concern and understand it may arise from the compact presentation of our temporal analysis. We would like to clarify that COIN actually demonstrates substantially longer and more complex temporal reasoning than existing benchmarks. The detailed comparison may not be immediately apparent from the main figures, so we provide the specific data here. As shown in Figure 2 (top-left panel), COIN tasks span 180–2500 steps, which is significantly longer than other benchmarks:
 
-We appreciate this concern and understand it may arise from the compact presentation of our temporal analysis. We would like to clarify that COIN actually demonstrates **substantially longer temporal reasoning** than existing benchmarks. The detailed comparison may not be immediately apparent from the main figures, so we provide the specific data here. As shown in Figure 2 (top-left panel), COIN tasks span **180-2500 steps**, which is significantly longer than other benchmarks:
+Benchmark	Average Length
+ManipulaSkill	52.3
+Libero	77.3
+RoboCasa A.	123
+ARNOLD	125.8
+VLABench P.	157.2
+RLBench	180.2
+RoboCasa C.	371.9
+RLBench C.	502.5
+COIN-50	988.9
+COIN's Extended Temporal Reasoning and Task Structure:
 
-| Benchmark | Average Length |
-|-----------|----------------|
-| ManipulaSkill | 52.3 |
-| Libero | 77.3 |
-| RoboCasa A. | 123 |
-| ARNOLD | 125.8 |
-| VLABench P. | 157.2 |
-| RLBench | 180.2 |
-| RoboCasa C. | 371.9 |
-| RLBench C. | 502.5 |
-| **COIN-50** | **988.9** |
+Our benchmark is not only longer in terms of average trajectory length, but also features a rich diversity of temporal dependencies and subgoal structures.
+Among our 50 tasks, the vast majority contain more than three subgoals, with at least 40 tasks exhibiting strong temporal dependencies—meaning that information or actions from earlier in the task are essential for successful completion of later stages. This design ensures that models must reason over extended horizons and cannot succeed by relying solely on local or short-term cues.
+The average trajectory length in COIN is the longest among all existing benchmarks, at over 900 steps per task.
+Multi-Level Subgoal Decomposition: Our design philosophy emphasizes both interactive reasoning depth and genuine temporal complexity. Each COIN task is composed of multiple subgoals, requiring models to:
 
-**COIN's Extended Temporal Reasoning:**
-1. **Nearly 2x longer** than the next longest benchmark (RLBench C.)
-2. **6-19x longer** than most existing benchmarks
-3. **Multi-step causal chains** where early exploration affects outcomes hundreds of steps later
-4. **Persistent state reasoning** requiring models to maintain and update beliefs over extended interactions
+Plan across multiple subgoals (typically 2–5 per task)
+Maintain and update goal hierarchies throughout extended interactions
+Coordinate between subgoals, where success in later stages depends on correct execution of earlier ones
+Adapt subgoal execution based on environmental feedback
+The following table summarizes the distribution of subgoal counts across tasks:
 
-Our design philosophy focuses on *interactive* reasoning depth combined with genuine temporal complexity. The extended length is not arbitrary but reflects the inherent complexity of interactive reasoning tasks where models must:
-- Gather information through exploration 
-- Form hypotheses about object properties
-- Execute complex manipulation sequences
-- Adapt based on interaction outcomes
+Subtask Length	Percentage	Number of Tasks
+2	0.36	18
+3	0.46	23
+4	0.12	6
+5	0.06	3
+Key Takeaways:
 
-**Multi-Level Subgoal Decomposition:**
-Furthermore, our COIN-Primitive tasks demonstrate complex hierarchical reasoning through multi-step subgoal composition. As shown in our analysis, each task consists of multiple subgoals with varying complexity:
-
-| Subtask Length | Percentage | Number of Tasks |
-|----------------|------------|----------------|
-| 2 | 0.36 | 18 |
-| 3 | 0.46 | 23 |
-| 4 | 0.12 | 6 |
-| 5 | 0.06 | 3 |
-
-This hierarchical structure requires models to:
-1. **Plan across multiple subgoals** (2-5 subgoals per task)
-2. **Maintain goal hierarchies** throughout extended interactions
-3. **Coordinate between subgoals** where success in later subgoals depends on earlier ones
-4. **Adapt subgoal execution** based on environmental feedback
-
-This represents a significant advance in temporal reasoning evaluation for embodied AI, combining both extended temporal horizons and hierarchical goal decomposition.
-
+Nearly all tasks in COIN require reasoning over multiple, temporally dependent subgoals.
+Over 80% of tasks have three or more subgoals, and at least 40 tasks are explicitly designed such that earlier information is essential for later reasoning.
+This structure enforces multi-step causal reasoning and prevents shortcut solutions based on memorization or local pattern matching.
+Together, these features represent a significant advance in temporal reasoning evaluation for embodied AI, combining extended temporal horizons, hierarchical goal decomposition, and genuine interactive complexity.
 ### Q3: The diversity in object categories, materials, textures, and physical interactions is relatively limited. More diverse object and scene categories would strengthen the generalization claims of the benchmark.
 
 **Response:**
 
-Our current focus on tabletop scenarios was intentional to establish a controlled foundation for interactive reasoning evaluation. However, we acknowledge the importance of diversity for generalization. We propose expanding COIN with:
+First, thank you very much for your suggestion. We fully agree that increasing the diversity of object categories, materials, and related factors is crucial for enhancing model performance and generalization. In this work, however, our primary goal was to construct a realistic and controlled benchmark that evaluates a model’s ability to adapt to different environments under test-time computation. As such, we have focused on the diversity of reasoning processes—this includes diversity in reasoning targets (e.g., friction, mass, shape), diversity in object relationships (such as containment and comparison), and diversity in robot-object interaction reasoning.
 
-1. **Material Diversity**: Objects with varying textures, weights, and physical properties
-2. **Scene Complexity**: Kitchen, workshop, and outdoor environments
-3. **Dynamic Elements**: Moving obstacles, changing lighting, and environmental disturbances
-4. **Scale Variation**: From precision tasks to large-scale manipulation
-
+Of course, we recognize the importance of broader diversity as you mentioned. Many of our assets are sourced from works such as ObjectVerse and PartMobility, and our framework is designed to easily support further expansion. In the final version, we plan to add an automatic asset integration pipeline, making it straightforward for the community to build richer and more varied environments.
 ### Q4: While the paper robustly identifies model failures (e.g., inadequate adaptation, visual-motor mismatches), it offers limited guidance or strategies on how these failures might be practically mitigated or resolved.
 
 **Response:**
+Thank you for your suggestion. Throughout the rebuttal process, we have introduced several new metrics and reorganized our previous evaluation framework. Our updated analysis highlights the following key directions for addressing observed model failures:
 
-Based on our detailed analysis and enhanced evaluation framework, we provide specific guidance for addressing identified failures:
-
-**VLA-Specific Failure Mitigation:**
-1. **Action Smoothness Issues**: 
-   - Implement action regularization to prevent large impact forces
-   - Use trajectory smoothing techniques to avoid discontinuities
-   - Add momentum-based action filtering to prevent "explosive" behaviors
-
-2. **Generalization Failures with Novel Objects**:
-   - Develop object-agnostic representations for manipulation
-   - Use curriculum learning with progressive object introduction
-   - Implement few-shot adaptation mechanisms for unseen objects
-
-3. **Multi-modal Integration Problems**:
-   - Design explicit fusion architectures for visual-language-proprioceptive information
-   - Use attention mechanisms to balance different modality contributions
-   - Implement modality-specific encoders with cross-modal alignment
-
-**Interactive Reasoning Enhancement Strategies:**
-4. **Spatial Information Utilization**:
-   - Provide explicit spatial representations (as in VoxPoser)
-   - Use 3D scene graphs for spatial relationship understanding
-   - Implement spatial attention mechanisms for object localization
-
-5. **Instruction Adaptation Capabilities**:
-   - Develop context-aware instruction parsing
-   - Implement state-dependent instruction switching mechanisms
-   - Use reinforcement learning for optimal instruction timing
-
-6. **Task Decomposition and Planning**:
-   - Train models on our enhanced workflow annotations
-   - Use hierarchical planning with sub-goal prediction
-   - Implement tentative planning with execution monitoring
-
-**Workflow-Based Training Strategies:**
-7. **Leverage Mid-Level Task Decomposition**:
-   - Use our checkpoint-based task splitting for curriculum learning
-   - Train on progressive difficulty levels
-   - Implement milestone-based reward shaping
-
-These strategies are directly informed by our comprehensive evaluation metrics and will be supported by our enhanced benchmark annotations.
-
+Urgent Need to Improve VLA Generalization: We found that even introducing a small new object (e.g., a cube) into the workspace can significantly degrade VLA generalization. This limitation severely restricts the scalability of current models and is a fundamental bottleneck for interactive reasoning scenarios.
+Action Stability and Gripper Timing: Our experiments demonstrate that both action stability and the accuracy of gripper timing are critical for model performance, especially in tasks involving pick, place, open, and close operations. Instabilities in these aspects can drastically affect the success of interactive manipulations.
+Toward More Adaptive Code-as-Policy Approaches: Current open-loop methods lack strong adaptability for interactive reasoning tasks. We recommend incorporating more online, closed-loop strategies, as well as chain-of-thought (CoT) style reasoning within VLMs. By enabling models to summarize feedback during execution and use these summaries to inform subsequent decisions, we can move beyond simple backtracking and better handle the dynamic nature of real-world environments.
+Enhancing HVLA Task Switching and Instruction Handling: HVLA models should integrate more sophisticated modules for task switching. Instruction chaining can enable models to tackle new tasks, but it is equally important for the model to reflect on recent changes—potentially by summarizing the last segment of video—and use this context to guide future task planning.
+These recommendations are directly informed by our expanded evaluation metrics and aim to provide concrete strategies for improving model robustness and adaptability in interactive reasoning settings.
 ### Q5: No comparison or baseline involving human performance or human-level task demonstrations is provided. Such a baseline would help contextualize the difficulty level of tasks and set meaningful targets for model performance.
 
 **Response:**
+Indeed, we acknowledge that this aspect was previously underexplored. To address this, we selected 10 representative tasks from our set of 50, ensuring coverage of long-horizon reasoning, tool use, and other key challenges. We then recruited five participants with no prior exposure to our tasks and asked each to attempt every task twice via teleoperation, recording their success rates.
 
-You're absolutely right about the need for human baselines. We collected human demonstrations during our AR teleoperation data collection and can provide:
-
-1. **Human Success Rates**: Across all 50 tasks for difficulty contextualization
-2. **Human Strategy Analysis**: Common approaches and failure modes
-3. **Efficiency Comparisons**: Steps required and time to completion
-4. **Learning Curves**: How human performance improves with practice
-
-Preliminary analysis shows humans achieve 85-95% success rates on COIN tasks, providing clear targets for model development.
-
+Below, we present a summary table of our experimental results.
 
 ---
 
@@ -290,63 +188,14 @@ Preliminary analysis shows humans achieve 85-95% success rates on COIN tasks, pr
 ### Q1: Experiments focus on tabletop scenarios, neglecting dynamic environments (e.g., outdoor or cluttered spaces). This limits the benchmark's generalizability to real-world robotics tasks. In addition, tasks assume fixed environmental setups, lacking dynamic elements (e.g., moving obstacles or changing object states). Real-world interactions often require handling unpredictability, which COIN does not fully capture. It is interesting to introduce dynamic environments (e.g., kitchen with running water, outdoor construction sites) to test adaptability. This would better reflect real-world manipulation challenges.
 
 **Response:**
+First, thank you for your constructive suggestions. We fully acknowledge that real-world experiments are crucial for embodied intelligence research and are essential for demonstrating the practical value of robotics. However, the primary focus of our work is to evaluate different model types in interactive environments. To this end, we have constructed a rich set of interactive tasks and systematically tested model performance within these scenarios.
 
-Thank you for these excellent and practically meaningful scenario suggestions! We completely agree that these environments (kitchens with running water, outdoor construction sites, cluttered spaces) are highly valuable and very suitable for future extensions of our benchmark.
+Our evaluation shows that current VLA and Code-as-Policy models are unable to effectively solve even the tabletop tasks, highlighting fundamental limitations. Introducing additional dynamic elements would further increase uncertainty and complexity, which could obscure the core insights we seek regarding interactive reasoning. Therefore, we have chosen not to make such adjustments in this work, as our goal is to first address foundational challenges step by step.
 
-**Our Current Focus and Rationale:**
+That said, we greatly appreciate your perspective. We agree that advancing the field of robotics requires incremental progress on these fronts.
 
-Our deliberate focus on tabletop scenarios stems from a fundamental concern: **how to enable robots to understand their environment and adapt their strategies during interaction**. This core challenge emphasizes **adaptability during manipulation** rather than environmental complexity. We believe it's crucial to first establish strong foundations in interactive reasoning before scaling to more complex environments.
-
-**Current VLA Limitations Justify Our Approach:**
-
-As our evaluation reveals, current VLAs struggle significantly even on our controlled tabletop tasks, with success rates below 3%. This suggests that **VLAs urgently need to solve the fundamental problem of "thinking" during interaction** before tackling more complex environments. Specifically:
-
-1. **Interactive Reasoning Gap**: Models fail to effectively use information gathered through exploration
-2. **Adaptive Strategy Formation**: Current approaches struggle to modify their behavior based on environmental feedback
-3. **Causal Understanding**: VLAs show limited ability to form and test hypotheses about object properties
-
-**Future Extensions We Envision:**
-
-Once we establish solid interactive reasoning capabilities on tabletop scenarios, we absolutely plan to extend COIN to the dynamic environments you suggest:
-1. **COIN-Kitchen**: Complex scenarios with running water, heat sources, and multi-agent interactions
-2. **COIN-Outdoor**: Construction and maintenance tasks with weather variations
-3. **COIN-Dynamic**: Tasks with moving obstacles and changing environmental conditions
-4. **COIN-Cluttered**: Dense object arrangements requiring spatial reasoning
-
-We view COIN's current tabletop focus as laying the essential groundwork for these more ambitious scenarios.
-
+Additionally, regarding your point about real-robot experiments, our environments are designed to be easily transferable to physical hardware. We provide STL files for all assets used in our benchmark, enabling any researcher to 3D print the necessary models and conduct real-world experiments.
 ### Q2: While COIN uses physics-based simulation, it may not fully replicate real-world robot dynamics (e.g., sensor noise, actuator limitations). This could affect transferability to physical robots. It is cool to integrate COIN with physical robot platforms (e.g., Franka Emika Panda) for real-world validation. This could involve hybrid simulation-reality setups to reduce the sim-to-real gap.
+Thank you very much for your question and suggestion. As mentioned in our previous response regarding real-robot experiments, users can leverage the provided STL files to 3D print physical models and conduct corresponding real-world experiments.
 
-**Response:**
-
-You raise an excellent point about sim-to-real transfer. Our current simulation-based approach provides several advantages while acknowledging limitations:
-
-**Simulation Advantages:**
-1. **Scalability**: Enables evaluation across 50 diverse tasks with consistent conditions
-2. **Reproducibility**: Ensures fair comparison across different models and research groups
-3. **Safety**: Allows testing of potentially unsafe behaviors without physical risk
-4. **Cost-Effectiveness**: Reduces hardware requirements for widespread adoption
-
-**Addressing Sim-to-Real Gap:**
-1. **Physics Fidelity**: Our simulation uses high-fidelity physics with realistic friction, contact dynamics, and material properties
-2. **Sensor Modeling**: We incorporate realistic camera noise, depth sensor limitations, and lighting variations
-3. **Action Space Realism**: Robot actions are constrained by realistic joint limits and dynamics
-
-**COIN's Role as a Community Benchmark:**
-
-As a benchmark, our primary goal is to provide **fair and consistent evaluation** of different models rather than extensive physical robot integration. Similar to successful benchmarks in our field:
-
-- **SimPLEnv**: Gained community adoption by enabling systematic VLA testing in simulation environments
-- **Libero**: Became a widely-used VLA benchmark by focusing on generalization evaluation
-- **RLBench**: Established standard evaluation protocols for manipulation tasks
-
-**Our Benchmark Philosophy:**
-1. **Standardized Evaluation**: Consistent simulation environment ensures fair comparison across research groups
-2. **Accessibility**: Simulation-based approach enables widespread community participation without expensive hardware
-3. **Reproducibility**: Deterministic environments allow reliable benchmarking and progress tracking
-4. **Focus on Core Capabilities**: Interactive reasoning evaluation without confounding factors from hardware variations
-
-**Community Impact Goal:**
-We aim to provide a carefully designed platform that **promotes community attention to interactive reasoning challenges**, just as SimPLEnv advanced VLA testing and Libero advanced generalization research. Our contribution is establishing the evaluation framework for interactive reasoning, which we believe is a fundamental capability gap that needs systematic study before scaling to physical systems.
-
-The simulation-based approach allows the community to make rapid progress on the core algorithmic challenges we identify.
+Additionally, our entire platform is built on ManiSkill and SAPIEN, both of which are highly extensible and support a wide range of commonly used sensors and configurations. Within our environment, it is possible to simulate various sensor noises, physical lighting conditions, and actuator limitations. These capabilities help to partially bridge the sim-to-real gap, and, in fact, many recent studies have already demonstrated successful sim-to-real transfer using this environment.
