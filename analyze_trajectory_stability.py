@@ -22,7 +22,7 @@ def analyze_trajectory_stability():
         return
     
     # Initialize stability calculators
-    traj_calculator = TrajectoryStabilityCalculator(dt=0.1)  # Assuming 10Hz control
+    traj_calculator = TrajectoryStabilityCalculator(dt=1/50)  # Assuming 10Hz control
     gripper_calculator = GripperStabilityCalculator()
     
     print("\n=== Trajectory Stability Analysis ===")

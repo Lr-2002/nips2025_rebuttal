@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Comprehensive Model Analysis for COIN Benchmark
+Simplified Model Analysis for COIN Benchmark
 
-This script analyzes all trajectories in the remote_data directory to provide
-a complete evaluation of the VLA model's performance across different metrics.
+This script analyzes all trajectories focusing on trajectory stability and gripper performance.
+Optimized for batch processing of different models.
 """
 
 import os
@@ -19,11 +19,10 @@ from collections import defaultdict, Counter
 
 from data_loader import RebuttalDataLoader
 from metric import TrajectoryStabilityCalculator, GripperStabilityCalculator
-from task_decomposition_scorer import TaskDecompositionScorer
 
 class ComprehensiveModelAnalyzer:
     """
-    Comprehensive analyzer for VLA model performance across all trajectories.
+    Simplified analyzer focusing on trajectory stability and gripper performance.
     """
     
     def __init__(self, data_root: str):
@@ -32,10 +31,9 @@ class ComprehensiveModelAnalyzer:
         self.results = {}
         self.summary_stats = {}
         
-        # Initialize calculators
-        self.traj_calculator = TrajectoryStabilityCalculator(dt=0.1)
+        # Initialize calculators - only trajectory and gripper
+        self.traj_calculator = TrajectoryStabilityCalculator(dt=1/50)  # 50Hz control
         self.gripper_calculator = GripperStabilityCalculator()
-        self.decomposition_calculator = TaskDecompositionScorer()
         
         # Task categories for analysis
         self.task_categories = {
@@ -158,42 +156,36 @@ class ComprehensiveModelAnalyzer:
             return np.array([])
     
     def analyze_single_trajectory(self, traj_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyze a single trajectory with all metrics."""
+        """Analyze a single trajectory focusing on trajectory stability and gripper performance."""
         if traj_data is None:
             return None
-        
-        actions = traj_data['actions']
-        if len(actions) == 0:
-            return None
-        
+            
         try:
-            # Calculate trajectory stability
+            actions = traj_data['actions']
+            
+            if len(actions) == 0:
+                print(f"Warning: No actions found for {traj_data['trajectory_id']}")
+                return None
+            
+            # Calculate trajectory stability metrics
             traj_metrics = self.traj_calculator.calculate_stability_metrics(actions)
             
-            # Calculate gripper stability
+            # Calculate gripper stability metrics
             gripper_metrics = self.gripper_calculator.calculate_gripper_stability(actions)
             
-            # Calculate task decomposition (create mock trajectory data object)
-            class MockTrajectoryData:
-                def __init__(self, chat_data):
-                    self.chat_data = chat_data
-            
-            mock_traj = MockTrajectoryData(traj_data['chat_data'])
-            decomposition_metrics = self.decomposition_calculator.calculate_decomposition_score(mock_traj)
-            
-            # Compile results
+            # Compile results - only trajectory and gripper metrics
             result = {
+                # Basic info
                 'trajectory_id': traj_data['trajectory_id'],
                 'task_name': traj_data['task_name'],
                 'task_category': traj_data['task_category'],
-                'action_count': len(actions),
-                'has_video': traj_data['has_video'],
+                'total_actions': len(actions),
                 
                 # Trajectory stability metrics
                 'traj_overall_stability': traj_metrics.overall_stability_score,
-                'traj_velocity_smoothness': traj_metrics.velocity_smoothness,
-                'traj_acceleration_smoothness': traj_metrics.acceleration_smoothness,
-                'traj_jerk_smoothness': traj_metrics.jerk_smoothness,
+                'traj_velocity_stability': traj_metrics.velocity_smoothness,
+                'traj_acceleration_stability': traj_metrics.acceleration_smoothness,
+                'traj_jerk_stability': traj_metrics.jerk_smoothness,
                 'traj_position_stability': traj_metrics.position_stability,
                 
                 # Gripper stability metrics
@@ -204,19 +196,9 @@ class ComprehensiveModelAnalyzer:
                 'gripper_changes': gripper_metrics.total_gripper_changes,
                 'gripper_expected_changes': gripper_metrics.expected_changes,
                 
-                # Task decomposition metrics
-                'decomp_overall_score': decomposition_metrics.overall_decomposition_score,
-                'decomp_logical_coherence': decomposition_metrics.logical_coherence_score,
-                'decomp_granularity': decomposition_metrics.granularity_score,
-                'decomp_completeness': decomposition_metrics.completeness_score,
-                'decomp_primitive_alignment': decomposition_metrics.primitive_alignment_score,
-                'decomp_total_subtasks': decomposition_metrics.total_subtasks,
-                'decomp_primitive_coverage': decomposition_metrics.primitive_task_coverage,
-                
                 # Problem detection flags
                 'has_vla_explosion': traj_metrics.overall_stability_score < 0.5,
                 'has_erratic_gripper': gripper_metrics.overall_stability_score < 0.6,
-                'has_poor_decomposition': decomposition_metrics.overall_decomposition_score < 0.6,
             }
             
             return result
@@ -259,23 +241,31 @@ class ComprehensiveModelAnalyzer:
         return df
     
     def generate_summary_statistics(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """Generate comprehensive summary statistics."""
+        """Generate summary statistics focused on trajectory and gripper metrics."""
         summary = {}
         
-        # Overall statistics
+        # Basic statistics
         summary['total_trajectories'] = len(df)
-        summary['total_actions'] = df['action_count'].sum()
-        summary['avg_actions_per_trajectory'] = df['action_count'].mean()
+        summary['total_actions'] = df['total_actions'].sum()
+        summary['avg_actions_per_trajectory'] = df['total_actions'].mean()
         
         # Task category distribution
         summary['task_categories'] = df['task_category'].value_counts().to_dict()
         
-        # Stability metrics summary
-        stability_metrics = [
-            'traj_overall_stability', 'gripper_overall_stability', 'decomp_overall_score'
+        # Trajectory stability metrics summary
+        traj_metrics = [
+            'traj_overall_stability', 'traj_velocity_stability', 'traj_acceleration_stability',
+            'traj_jerk_stability', 'traj_position_stability'
         ]
         
-        for metric in stability_metrics:
+        # Gripper stability metrics summary
+        gripper_metrics = [
+            'gripper_overall_stability', 'gripper_smoothness', 'gripper_frequency', 'gripper_coordination'
+        ]
+        
+        # Calculate statistics for all metrics
+        all_metrics = traj_metrics + gripper_metrics
+        for metric in all_metrics:
             summary[f'{metric}_mean'] = df[metric].mean()
             summary[f'{metric}_std'] = df[metric].std()
             summary[f'{metric}_min'] = df[metric].min()
@@ -284,31 +274,27 @@ class ComprehensiveModelAnalyzer:
         # Problem detection summary
         summary['vla_explosions'] = df['has_vla_explosion'].sum()
         summary['erratic_gripper_count'] = df['has_erratic_gripper'].sum()
-        summary['poor_decomposition_count'] = df['has_poor_decomposition'].sum()
+        summary['vla_explosion_rate'] = df['has_vla_explosion'].mean()
+        summary['erratic_gripper_rate'] = df['has_erratic_gripper'].mean()
         
         # Problem rates by category
         for category in df['task_category'].unique():
             cat_df = df[df['task_category'] == category]
             summary[f'{category}_vla_explosion_rate'] = cat_df['has_vla_explosion'].mean()
             summary[f'{category}_erratic_gripper_rate'] = cat_df['has_erratic_gripper'].mean()
-            summary[f'{category}_poor_decomp_rate'] = cat_df['has_poor_decomposition'].mean()
         
         # Gripper behavior analysis
         summary['avg_gripper_changes'] = df['gripper_changes'].mean()
         summary['avg_expected_gripper_changes'] = df['gripper_expected_changes'].mean()
         summary['gripper_overuse_ratio'] = (df['gripper_changes'] / df['gripper_expected_changes']).mean()
         
-        # Task decomposition analysis
-        summary['avg_subtasks_per_trajectory'] = df['decomp_total_subtasks'].mean()
-        summary['avg_primitive_coverage'] = df['decomp_primitive_coverage'].mean()
-        
         self.summary_stats = summary
         return summary
     
     def print_analysis_report(self, df: pd.DataFrame, summary: Dict[str, Any]):
-        """Print comprehensive analysis report."""
+        """Print focused analysis report on trajectory stability and gripper performance."""
         print("\n" + "="*80)
-        print("COMPREHENSIVE VLA MODEL ANALYSIS REPORT")
+        print("VLA MODEL TRAJECTORY & GRIPPER ANALYSIS REPORT")
         print("="*80)
         
         # Overall Statistics
@@ -327,40 +313,27 @@ class ComprehensiveModelAnalyzer:
         print(f"\n📈 STABILITY METRICS OVERVIEW:")
         print(f"  Trajectory Stability: {summary['traj_overall_stability_mean']:.3f} ± {summary['traj_overall_stability_std']:.3f}")
         print(f"  Gripper Stability: {summary['gripper_overall_stability_mean']:.3f} ± {summary['gripper_overall_stability_std']:.3f}")
-        print(f"  Task Decomposition: {summary['decomp_overall_score_mean']:.3f} ± {summary['decomp_overall_score_std']:.3f}")
         
         # Problem Detection
         print(f"\n⚠️  PROBLEM DETECTION SUMMARY:")
-        vla_rate = (summary['vla_explosions'] / summary['total_trajectories']) * 100
-        gripper_rate = (summary['erratic_gripper_count'] / summary['total_trajectories']) * 100
-        decomp_rate = (summary['poor_decomposition_count'] / summary['total_trajectories']) * 100
-        
-        print(f"  VLA Action Explosions: {summary['vla_explosions']} ({vla_rate:.1f}%)")
-        print(f"  Erratic Gripper Control: {summary['erratic_gripper_count']} ({gripper_rate:.1f}%)")
-        print(f"  Poor Task Decomposition: {summary['poor_decomposition_count']} ({decomp_rate:.1f}%)")
+        print(f"  VLA Action Explosions: {summary['vla_explosions']} ({summary['vla_explosion_rate']:.1%})")
+        print(f"  Erratic Gripper Control: {summary['erratic_gripper_count']} ({summary['erratic_gripper_rate']:.1%})")
         
         # Category-specific Analysis
         print(f"\n📊 PROBLEM RATES BY TASK CATEGORY:")
         for category in df['task_category'].unique():
-            vla_cat_rate = summary.get(f'{category}_vla_explosion_rate', 0) * 100
-            gripper_cat_rate = summary.get(f'{category}_erratic_gripper_rate', 0) * 100
-            decomp_cat_rate = summary.get(f'{category}_poor_decomp_rate', 0) * 100
+            vla_cat_rate = summary.get(f'{category}_vla_explosion_rate', 0)
+            gripper_cat_rate = summary.get(f'{category}_erratic_gripper_rate', 0)
             
             print(f"  {category.capitalize()}:")
-            print(f"    VLA Explosions: {vla_cat_rate:.1f}%")
-            print(f"    Erratic Gripper: {gripper_cat_rate:.1f}%")
-            print(f"    Poor Decomposition: {decomp_cat_rate:.1f}%")
+            print(f"    VLA Explosions: {vla_cat_rate:.1%}")
+            print(f"    Erratic Gripper: {gripper_cat_rate:.1%}")
         
         # Gripper Behavior Analysis
         print(f"\n🤖 GRIPPER BEHAVIOR ANALYSIS:")
         print(f"  Average Gripper Changes: {summary['avg_gripper_changes']:.1f}")
         print(f"  Expected Gripper Changes: {summary['avg_expected_gripper_changes']:.1f}")
         print(f"  Gripper Overuse Ratio: {summary['gripper_overuse_ratio']:.2f}x")
-        
-        # Task Decomposition Analysis
-        print(f"\n🧠 TASK DECOMPOSITION ANALYSIS:")
-        print(f"  Average Subtasks per Trajectory: {summary['avg_subtasks_per_trajectory']:.1f}")
-        print(f"  Average Primitive Coverage: {summary['avg_primitive_coverage']:.1%}")
         
         # Top Problematic Tasks
         print(f"\n🔍 TOP PROBLEMATIC TRAJECTORIES:")
@@ -380,12 +353,11 @@ class ComprehensiveModelAnalyzer:
         
         # Best performing trajectories
         print(f"\n✅ TOP PERFORMING TRAJECTORIES:")
-        best_overall = df.loc[(df['traj_overall_stability'] + df['gripper_overall_stability'] + df['decomp_overall_score']).idxmax()]
+        best_overall = df.loc[(df['traj_overall_stability'] + df['gripper_overall_stability']).idxmax()]
         print(f"  Best Overall: {best_overall['trajectory_id']}")
         print(f"    Task: {best_overall['task_name']}")
-        print(f"    Trajectory: {best_overall['traj_overall_stability']:.3f}")
-        print(f"    Gripper: {best_overall['gripper_overall_stability']:.3f}")
-        print(f"    Decomposition: {best_overall['decomp_overall_score']:.3f}")
+        print(f"    Trajectory Stability: {best_overall['traj_overall_stability']:.3f}")
+        print(f"    Gripper Stability: {best_overall['gripper_overall_stability']:.3f}")
         
         print(f"\n" + "="*80)
         print("ANALYSIS COMPLETE")
